@@ -21,20 +21,15 @@
  */
 package lombok.core.configuration;
 
-import java.util.Iterator;
+import java.util.Collections;
+import java.util.List;
 
-public class BubblingConfigurationResolver implements ConfigurationResolver {
-	private final CascadingConfigurationResolver cascadingResolver;
-
-	public BubblingConfigurationResolver(final ConfigurationFile forUri, final ConfigurationFileToSource fileToSource) {
-		this.cascadingResolver = new CascadingConfigurationResolver(new Iterable<ConfigurationSource>() {
-			@Override public Iterator<ConfigurationSource> iterator() {
-				return new BubblingConfigurationSourceIterator(forUri, fileToSource);
-			}
-		});
+public class AbsentConfigurationSource implements ConfigurationSource {
+	@Override public Result resolve(ConfigurationKey<?> key) {
+		return null;
 	}
 
-	@Override public <T> T resolve(ConfigurationKey<T> key) {
-		return cascadingResolver.resolve(key);
+	@Override public List<ConfigurationFile> imports() {
+		return Collections.emptyList();
 	}
 }

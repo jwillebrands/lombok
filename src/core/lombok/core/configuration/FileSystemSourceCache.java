@@ -99,7 +99,8 @@ public class FileSystemSourceCache {
 			content.lastChecked = now;
 			long previouslyModified = content.lastModified;
 			content.lastModified = file.getLastModifiedOrMissing();
-			if (content.lastModified != previouslyModified) content.source = content.lastModified == MISSING ? null : SingleConfigurationSource.parse(file, parser);
+			if (content.lastModified != previouslyModified)
+				content.source = content.lastModified == MISSING ? new AbsentConfigurationSource() : SingleConfigurationSource.parse(file, parser);
 			return content.source;
 		}
 	}
@@ -125,7 +126,7 @@ public class FileSystemSourceCache {
 		}
 		
 		static Content empty() {
-			return new Content(null, MISSING, NEVER_CHECKED);
+			return new Content(new AbsentConfigurationSource(), MISSING, NEVER_CHECKED);
 		}
 	}
 }

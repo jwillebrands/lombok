@@ -40,6 +40,7 @@ import java.util.regex.Pattern;
 import org.junit.Assert;
 
 import lombok.core.LombokImmutableList;
+import lombok.core.configuration.AbsentConfigurationSource;
 import lombok.core.configuration.BubblingConfigurationResolver;
 import lombok.core.configuration.ConfigurationFile;
 import lombok.core.configuration.ConfigurationFileToSource;
@@ -252,7 +253,7 @@ public class LombokTestSource {
 		final ConfigurationSource source = SingleConfigurationSource.parse(configurationFile, new ConfigurationParser(reporter));
 		ConfigurationFileToSource sourceFinder = new ConfigurationFileToSource() {
 			@Override public ConfigurationSource parsed(ConfigurationFile fileLocation) {
-				return fileLocation.equals(configurationFile) ? source : null;
+				return fileLocation.equals(configurationFile) ? source : new AbsentConfigurationSource();
 			}
 		};
 		
