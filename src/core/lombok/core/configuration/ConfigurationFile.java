@@ -27,6 +27,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -59,6 +60,10 @@ public abstract class ConfigurationFile {
 	
 	public static ConfigurationFile forDirectory(File directory) {
 		return forFile(new File(directory, LOMBOK_CONFIG_FILENAME));
+	}
+
+	public static ConfigurationFile forClasspathResource(String resource) {
+		return new ClasspathConfigurationFile(resource);
 	}
 	
 	public static ConfigurationFile fromCharSequence(String identifier, CharSequence contents, long lastModified) {
@@ -321,6 +326,40 @@ public abstract class ConfigurationFile {
 
 		@Override boolean exists() {
 			return true;
+		}
+
+		@Override public ConfigurationFile resolve(String path) {
+			return null;
+		}
+
+		@Override ConfigurationFile parent() {
+			return null;
+		}
+	}
+
+	private static class ClasspathConfigurationFile extends ConfigurationFile {
+		private URL classpathResource;
+
+		private ClasspathConfigurationFile(String identifier) {
+			super(identifier);
+			this.classpathResource = getClass().getResource(identifier);
+		}
+
+		@Override long getLastModifiedOrMissing() {
+			return 0;
+		}
+
+		@Override boolean exists() {
+			return this.classpathResource != null;
+		}
+
+		@Override CharSequence contents() throws IOException {
+			InputStream is = classpathResource.openStream();
+			try {
+				return read(is);
+			} finally {
+				is.close();
+			}
 		}
 
 		@Override public ConfigurationFile resolve(String path) {
