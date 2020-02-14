@@ -28,8 +28,15 @@ import java.util.Collection;
 import java.util.List;
 
 import lombok.core.configuration.ConfigurationFile;
+import lombok.core.debug.ProblemReporter;
 
 public class ResolutionSpecificationParser {
+	private ConfigurationResolutionStrategy defaultStrategy;
+
+	public ResolutionSpecificationParser(ConfigurationResolutionStrategy defaultStrategy) {
+		this.defaultStrategy = defaultStrategy;
+	}
+
 	public ConfigurationResolutionStrategy parseSpecification(String specification) {
 		specification = specification == null ? "" : specification.trim();
 		if (specification.trim().isEmpty()) {
@@ -69,6 +76,10 @@ public class ResolutionSpecificationParser {
 			if (strategy != null) {
 				strategies.add(strategy);
 			}
+		}
+		if (strategies.isEmpty()) {
+			ProblemReporter.info("No (valid) strategies specified. Falling back to default.",  null);
+			return defaultStrategy;
 		}
 		return new CompositeResolutionStrategy(strategies);
 	}

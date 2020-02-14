@@ -1,16 +1,16 @@
 /*
  * Copyright (C) 2009-2018 The Project Lombok Authors.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -48,6 +48,7 @@ import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic.Kind;
 
 import lombok.core.configuration.resolution.ConfigurationResolutionStrategy;
+import lombok.core.configuration.resolution.FileSystemBubblingResolutionStrategy;
 import lombok.core.configuration.resolution.ResolutionSpecificationParser;
 import lombok.patcher.ClassRootFinder;
 import lombok.permit.Permit;
@@ -62,17 +63,17 @@ public class AnnotationProcessor extends AbstractProcessor {
 		t.printStackTrace(new PrintWriter(w, true));
 		return w.toString();
 	}
-	
+
 	static abstract class ProcessorDescriptor {
 		abstract boolean want(ProcessingEnvironment procEnv, List<String> delayedWarnings);
 		abstract String getName();
 		abstract boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv);
 	}
-	
+
 	private final List<ProcessorDescriptor> registered = Arrays.asList(new JavacDescriptor(), new EcjDescriptor());
 	private final List<ProcessorDescriptor> active = new ArrayList<ProcessorDescriptor>();
 	private final List<String> delayedWarnings = new ArrayList<String>();
-	
+
 	/**
 	 * This method is a simplified version of {@link lombok.javac.apt.LombokProcessor.getJavacProcessingEnvironment}
 	 * It simply returns the processing environment, but in case of gradle incremental compilation,
@@ -81,41 +82,41 @@ public class AnnotationProcessor extends AbstractProcessor {
 	public static ProcessingEnvironment getJavacProcessingEnvironment(ProcessingEnvironment procEnv, List<String> delayedWarnings) {
 		return tryRecursivelyObtainJavacProcessingEnvironment(procEnv);
 	}
-	
+
 	private static ProcessingEnvironment tryRecursivelyObtainJavacProcessingEnvironment(ProcessingEnvironment procEnv) {
 		if (procEnv.getClass().getName().equals("com.sun.tools.javac.processing.JavacProcessingEnvironment")) {
 			return procEnv;
 		}
-		
+
 		for (Class<?> procEnvClass = procEnv.getClass(); procEnvClass != null; procEnvClass = procEnvClass.getSuperclass()) {
 			try {
 				Field field = Permit.getField(procEnvClass, "delegate");
 				Object delegate = field.get(procEnv);
-				
+
 				return tryRecursivelyObtainJavacProcessingEnvironment((ProcessingEnvironment) delegate);
 			} catch (final Exception e) {
 				// no valid delegate, try superclass
 			}
 		}
-		
+
 		return null;
 	}
-	
+
 	static class JavacDescriptor extends ProcessorDescriptor {
 		private Processor processor;
-		
+
 		@Override String getName() {
 			return "OpenJDK javac";
 		}
-		
+
 		@Override boolean want(ProcessingEnvironment procEnv, List<String> delayedWarnings) {
 			// do not run on ECJ as it may print warnings
 			if (procEnv.getClass().getName().startsWith("org.eclipse.jdt.")) return false;
-			
+
 			ProcessingEnvironment javacProcEnv = getJavacProcessingEnvironment(procEnv, delayedWarnings);
-			
+
 			if (javacProcEnv == null) return false;
-			
+
 			try {
 				ClassLoader classLoader = findAndPatchClassLoader(javacProcEnv);
 				processor = (Processor) Class.forName("lombok.javac.apt.LombokProcessor", false, classLoader).getConstructor().newInstance();
@@ -137,7 +138,7 @@ public class AnnotationProcessor extends AbstractProcessor {
 			}
 			return true;
 		}
-		
+
 		private ClassLoader findAndPatchClassLoader(ProcessingEnvironment procEnv) throws Exception {
 			ClassLoader environmentClassLoader = procEnv.getClass().getClassLoader();
 			if (environmentClassLoader != null && environmentClassLoader.getClass().getCanonicalName().equals("org.codehaus.plexus.compiler.javac.IsolatedClassLoader")) {
@@ -147,42 +148,42 @@ public class AnnotationProcessor extends AbstractProcessor {
 					m.invoke(environmentClassLoader, selfUrl);
 				}
 			}
-			
+
 			ClassLoader ourClassLoader = JavacDescriptor.class.getClassLoader();
 			if (ourClassLoader == null) return ClassLoader.getSystemClassLoader();
 			return ourClassLoader;
 		}
-		
+
 		@Override boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
 			return processor.process(annotations, roundEnv);
 		}
 	}
-	
+
 	static class EcjDescriptor extends ProcessorDescriptor {
 		@Override String getName() {
 			return "ECJ";
 		}
-		
+
 		@Override boolean want(ProcessingEnvironment procEnv, List<String> delayedWarnings) {
 			if (!procEnv.getClass().getName().startsWith("org.eclipse.jdt.")) return false;
-			
+
 			// Lombok used to work as annotation processor to ecj but that never actually worked properly, so we disabled the feature in 0.10.0.
 			// Because loading lombok as an agent in any ECJ-based non-interactive tool works just fine, we're not going to generate any warnings, as we'll
 			// likely generate more false positives than be helpful.
 			return true;
 		}
-		
+
 		@Override boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
 			return false;
 		}
 	}
-	
+
 	@Override public void init(ProcessingEnvironment procEnv) {
 		super.init(procEnv);
 		for (ProcessorDescriptor proc : registered) {
 			if (proc.want(procEnv, delayedWarnings)) active.add(proc);
 		}
-		
+
 		if (active.isEmpty() && delayedWarnings.isEmpty()) {
 			StringBuilder supported = new StringBuilder();
 			for (ProcessorDescriptor proc : registered) {
@@ -193,11 +194,12 @@ public class AnnotationProcessor extends AbstractProcessor {
 					"Your processor is: %s\nLombok supports: %s", procEnv.getClass().getName(), supported));
 		}
 		if (procEnv.getOptions().containsKey(OPTION_RESOLVER)) {
-			ConfigurationResolutionStrategy resolutionStrategy = new ResolutionSpecificationParser().parseResolutionSpecification(procEnv.getOptions().get(OPTION_RESOLVER));
+			ConfigurationResolutionStrategy resolutionStrategy = new ResolutionSpecificationParser(new FileSystemBubblingResolutionStrategy())
+				.parseResolutionSpecification(procEnv.getOptions().get(OPTION_RESOLVER));
 			LombokConfiguration.useResolutionStrategy(resolutionStrategy);
 		}
 	}
-	
+
 	@Override public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
 		if (!delayedWarnings.isEmpty()) {
 			Set<? extends Element> rootElements = roundEnv.getRootElements();
@@ -207,9 +209,9 @@ public class AnnotationProcessor extends AbstractProcessor {
 				delayedWarnings.clear();
 			}
 		}
-		
+
 		for (ProcessorDescriptor proc : active) proc.process(annotations, roundEnv);
-		
+
 		boolean onlyLombok = true;
 		boolean zeroElems = true;
 		for (TypeElement elem : annotations) {
@@ -218,19 +220,23 @@ public class AnnotationProcessor extends AbstractProcessor {
 			if (n.toString().startsWith("lombok.")) continue;
 			onlyLombok = false;
 		}
-		
+
 		// Normally we rely on the claiming processor to claim away all lombok annotations.
 		// One of the many Java9 oversights is that this 'process' API has not been fixed to address the point that 'files I want to look at' and 'annotations I want to claim' must be one and the same,
 		// and yet in java9 you can no longer have 2 providers for the same service, thus, if you go by module path, lombok no longer loads the ClaimingProcessor.
 		// This doesn't do as good a job, but it'll have to do. The only way to go from here, I think, is either 2 modules, or use reflection hackery to add ClaimingProcessor during our init.
-		
+
 		return onlyLombok && !zeroElems;
 	}
-	
+
 	/**
 	 * We just return the latest version of whatever JDK we run on. Stupid? Yeah, but it's either that or warnings on all versions but 1. Blame Joe.
 	 */
 	@Override public SourceVersion getSupportedSourceVersion() {
 		return SourceVersion.values()[SourceVersion.values().length - 1];
+	}
+
+	@Override public Set<String> getSupportedOptions() {
+		return SUPPORTED_OPTIONS;
 	}
 }

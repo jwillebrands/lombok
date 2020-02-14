@@ -42,6 +42,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import lombok.core.configuration.resolution.ConfigurationResolutionStrategy;
+import lombok.core.configuration.resolution.FileSystemBubblingResolutionStrategy;
 import lombok.core.configuration.resolution.ResolutionSpecificationParser;
 import org.mangosdk.spi.ProviderFor;
 
@@ -183,9 +184,9 @@ public class ConfigurationApp extends LombokApp {
 		return 0;
 	}
 
-		public int display(Collection<ConfigurationKey<?>> keys, boolean verbose, Collection<String> argsPaths, boolean explicitKeys, boolean notMentioned, List<String> resolution) throws Exception {
+	public int display(Collection<ConfigurationKey<?>> keys, boolean verbose, Collection<String> argsPaths, boolean explicitKeys, boolean notMentioned, List<String> resolution) throws Exception {
 		TreeMap<URI, Set<String>> sharedDirectories = findSharedDirectories(argsPaths);
-		ConfigurationResolutionStrategy resolutionSpecification = new ResolutionSpecificationParser().parseResolutionSpecification(resolution);
+		ConfigurationResolutionStrategy resolutionSpecification = new ResolutionSpecificationParser(new FileSystemBubblingResolutionStrategy()).parseResolutionSpecification(resolution);
 
 		if (sharedDirectories == null) return 1;
 

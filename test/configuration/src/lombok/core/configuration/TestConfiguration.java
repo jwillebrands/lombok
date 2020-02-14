@@ -30,6 +30,7 @@ import java.io.FileInputStream;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.regex.Pattern;
 
 import org.junit.Test;
@@ -57,7 +58,7 @@ public class TestConfiguration {
 		int result = -1;
 		try {
 			System.setProperty("user.home", normalizedName + "/home");
-			result = new ConfigurationApp().redirectOutput(outStream, errStream).display(keys, true, paths, true, false);
+			result = new ConfigurationApp().redirectOutput(outStream, errStream).display(keys, true, paths, true, false, Collections.<String>emptyList());
 		} finally {
 			System.setProperty("user.home", userHome);
 		}
