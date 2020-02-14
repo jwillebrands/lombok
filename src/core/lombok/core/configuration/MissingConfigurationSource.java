@@ -24,7 +24,7 @@ package lombok.core.configuration;
 import java.util.Collections;
 import java.util.List;
 
-public class AbsentConfigurationSource implements ConfigurationSource {
+public class MissingConfigurationSource implements ConfigurationSource {
 	@Override public Result resolve(ConfigurationKey<?> key) {
 		return null;
 	}
