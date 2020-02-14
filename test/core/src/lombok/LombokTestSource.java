@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -40,7 +41,7 @@ import java.util.regex.Pattern;
 import org.junit.Assert;
 
 import lombok.core.LombokImmutableList;
-import lombok.core.configuration.BubblingConfigurationResolver;
+import lombok.core.configuration.CascadingConfigurationResolver;
 import lombok.core.configuration.MissingConfigurationSource;
 import lombok.core.configuration.ConfigurationFile;
 import lombok.core.configuration.ConfigurationFileToSource;
@@ -49,6 +50,7 @@ import lombok.core.configuration.ConfigurationProblemReporter;
 import lombok.core.configuration.ConfigurationResolver;
 import lombok.core.configuration.ConfigurationSource;
 import lombok.core.configuration.SingleConfigurationSource;
+import lombok.core.configuration.resolution.BubblingConfigurationSourceIterator;
 
 public class LombokTestSource {
 	private final File file;
@@ -251,13 +253,17 @@ public class LombokTestSource {
 		};
 		final ConfigurationFile configurationFile = ConfigurationFile.fromCharSequence(file.getAbsoluteFile().getPath(), conf, ConfigurationFile.getLastModifiedOrMissing(file));
 		final ConfigurationSource source = SingleConfigurationSource.parse(configurationFile, new ConfigurationParser(reporter));
-		ConfigurationFileToSource sourceFinder = new ConfigurationFileToSource() {
+		final ConfigurationFileToSource sourceFinder = new ConfigurationFileToSource() {
 			@Override public ConfigurationSource parsed(ConfigurationFile fileLocation) {
 				return fileLocation.equals(configurationFile) ? source : new MissingConfigurationSource();
 			}
 		};
-		
-		this.configuration = new BubblingConfigurationResolver(configurationFile, sourceFinder);
+
+		this.configuration = new CascadingConfigurationResolver(new Iterable<ConfigurationSource>() {
+			@Override public Iterator<ConfigurationSource> iterator() {
+				return new BubblingConfigurationSourceIterator(configurationFile, sourceFinder);
+			}
+		});
 		this.formatPreferences = Collections.unmodifiableMap(formats);
 	}
 	
