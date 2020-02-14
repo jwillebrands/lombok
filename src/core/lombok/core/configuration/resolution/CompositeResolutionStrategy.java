@@ -19,14 +19,32 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
- package lombok.core.configuration.resolution;
+package lombok.core.configuration.resolution;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 import lombok.core.configuration.ConfigurationFile;
 import lombok.core.configuration.ConfigurationFileToSource;
 import lombok.core.configuration.ConfigurationSource;
 
-public interface ConfigurationSourceIteratorFactory {
-	Iterator<ConfigurationSource> iterateConfigurationSources(ConfigurationFile forUri, ConfigurationFileToSource fileToSource);
+public class CompositeResolutionStrategy implements ConfigurationResolutionStrategy {
+	private final List<ConfigurationResolutionStrategy> specifications;
+
+	public CompositeResolutionStrategy(List<ConfigurationResolutionStrategy> specifications) {
+		this.specifications = new ArrayList<ConfigurationResolutionStrategy>(specifications);
+	}
+
+	@Override public ConfigurationSourceIteratorFactory getIteratorFactory() {
+		return new ConfigurationSourceIteratorFactory() {
+			@Override public Iterator<ConfigurationSource> iterateConfigurationSources(ConfigurationFile forUri, ConfigurationFileToSource fileToSource) {
+				List<Iterator<ConfigurationSource>> nestedIterators = new ArrayList<Iterator<ConfigurationSource>>(specifications.size());
+				for (ConfigurationResolutionStrategy specification : specifications) {
+					nestedIterators.add(specification.getIteratorFactory().iterateConfigurationSources(forUri, fileToSource));
+				}
+				return ConfigurationSourceIterators.iterateInOrder(nestedIterators);
+			}
+		};
+	}
 }

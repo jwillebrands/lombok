@@ -29,7 +29,8 @@ import lombok.core.configuration.ConfigurationKey;
 import lombok.core.configuration.ConfigurationResolver;
 import lombok.core.configuration.ConfigurationResolverFactory;
 import lombok.core.configuration.FileSystemSourceCache;
-import lombok.core.configuration.resolution.ConfigurationResolutionSpecification;
+import lombok.core.configuration.resolution.ConfigurationResolutionStrategy;
+import lombok.core.configuration.resolution.FileSystemBubblingResolutionStrategy;
 
 public class LombokConfiguration {
 	private static final ConfigurationResolver NULL_RESOLVER = new ConfigurationResolver() {
@@ -72,6 +73,10 @@ public class LombokConfiguration {
 	}
 	
 	private static ConfigurationResolverFactory createFileSystemBubblingResolverFactory() {
-		return new CascadingConfigurationResolverFactory(ConfigurationResolutionSpecification.bubbleFileSystem(), cache);
+		return new CascadingConfigurationResolverFactory(new FileSystemBubblingResolutionStrategy(), cache);
+	}
+
+	public static void useResolutionStrategy(ConfigurationResolutionStrategy resolutionStrategy) {
+		configurationResolverFactory = new CascadingConfigurationResolverFactory(resolutionStrategy, cache);
 	}
 }

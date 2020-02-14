@@ -34,7 +34,6 @@ import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -42,7 +41,8 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import lombok.core.configuration.resolution.ConfigurationResolutionSpecification;
+import lombok.core.configuration.resolution.ConfigurationResolutionStrategy;
+import lombok.core.configuration.resolution.ResolutionSpecificationParser;
 import org.mangosdk.spi.ProviderFor;
 
 import com.zwitserloot.cmdreader.CmdReader;
@@ -183,28 +183,9 @@ public class ConfigurationApp extends LombokApp {
 		return 0;
 	}
 
-	private ConfigurationResolutionSpecification parseResolution(Collection<String> resolution) {
-		List<ConfigurationResolutionSpecification> specifications = new ArrayList<ConfigurationResolutionSpecification>();
-		for (String resolutionSpec : resolution) {
-			ConfigurationResolutionSpecification specification = ConfigurationResolutionSpecification.valueOf(resolutionSpec);
-			if (specification != null) {
-				specifications.add(specification);
-			}
-		}
-		if (specifications.isEmpty()) {
-			return ConfigurationResolutionSpecification.bubbleFileSystem();
-		}
-		Iterator<ConfigurationResolutionSpecification> iterator = specifications.iterator();
-		ConfigurationResolutionSpecification specification = iterator.next();
-		while (iterator.hasNext()) {
-			specification = specification.andThen(iterator.next());
-		}
-		return specification;
-	}
-
-	public int display(Collection<ConfigurationKey<?>> keys, boolean verbose, Collection<String> argsPaths, boolean explicitKeys, boolean notMentioned, List<String> resolution) throws Exception {
+		public int display(Collection<ConfigurationKey<?>> keys, boolean verbose, Collection<String> argsPaths, boolean explicitKeys, boolean notMentioned, List<String> resolution) throws Exception {
 		TreeMap<URI, Set<String>> sharedDirectories = findSharedDirectories(argsPaths);
-		ConfigurationResolutionSpecification resolutionSpecification = parseResolution(resolution);
+		ConfigurationResolutionStrategy resolutionSpecification = new ResolutionSpecificationParser().parseResolutionSpecification(resolution);
 
 		if (sharedDirectories == null) return 1;
 

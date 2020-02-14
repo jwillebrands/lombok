@@ -19,37 +19,37 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
- package lombok.core.configuration.resolution;
+package lombok.core.configuration.resolution;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 import lombok.core.configuration.ConfigurationFile;
-import lombok.core.configuration.ConfigurationValueType;
 
-public abstract class ConfigurationResolutionSpecification implements ConfigurationValueType {
-	public abstract ConfigurationSourceIteratorFactory getIteratorFactory();
-
-	public static ConfigurationResolutionSpecification valueOf(String value) {
-		value = value == null ? "" : value.trim();
-		if (value.trim().isEmpty()) {
+public class ResolutionSpecificationParser {
+	public ConfigurationResolutionStrategy parseSpecification(String specification) {
+		specification = specification == null ? "" : specification.trim();
+		if (specification.trim().isEmpty()) {
 			return null;
 		}
-		String[] configValue = value.split(":", 2);
+		String[] configValue = specification.split(":", 2);
 		if (configValue.length < 2) {
 			return null;
 		}
 		String type = configValue[0];
 		if ("file".equalsIgnoreCase(type)) {
-			return new StaticFileResolutionSpecification(configValue[1], new ConfigurationFileFactory() {
+			return new StaticFileResolutionStrategy(configValue[1], new ConfigurationFileFactory() {
 				@Override public ConfigurationFile configrationFileFromLocation(String location) {
 					return ConfigurationFile.forFile(new File(location));
 				}
 			});
 		} else if ("bubbling".equalsIgnoreCase(type)) {
-			return new FileSystemBubblingResolutionSpecification();
+			return new FileSystemBubblingResolutionStrategy();
 		} else if ("classpath".equalsIgnoreCase(type)) {
-			return new StaticFileResolutionSpecification(configValue[1], new ConfigurationFileFactory() {
+			return new StaticFileResolutionStrategy(configValue[1], new ConfigurationFileFactory() {
 				@Override public ConfigurationFile configrationFileFromLocation(String location) {
 					return ConfigurationFile.forClasspathResource(location);
 				}
@@ -57,24 +57,19 @@ public abstract class ConfigurationResolutionSpecification implements Configurat
 		}
 		return null;
 	}
-
-	public static String description() {
-		return "Strategy for resolving applicable configuration files.";
+	
+	public ConfigurationResolutionStrategy parseResolutionSpecification(String... specifications) {
+		return parseResolutionSpecification(Arrays.asList(specifications));
 	}
 
-	public static String exampleValue() {
-		return "bubbling:file";
-	}
-
-	public ConfigurationResolutionSpecification andThen(ConfigurationResolutionSpecification next) {
-		return compositeResolutionSpecification(this, next);
-	}
-
-	public static ConfigurationResolutionSpecification compositeResolutionSpecification(ConfigurationResolutionSpecification... specifications) {
-		return new CompositeResolutionSpecification(Arrays.asList(specifications));
-	}
-
-	public static ConfigurationResolutionSpecification bubbleFileSystem() {
-		return new FileSystemBubblingResolutionSpecification();
+	public ConfigurationResolutionStrategy parseResolutionSpecification(Collection<String> specifications) {
+		List<ConfigurationResolutionStrategy> strategies = new ArrayList<ConfigurationResolutionStrategy>();
+		for (String resolutionSpec : specifications) {
+			ConfigurationResolutionStrategy strategy = parseSpecification(resolutionSpec);
+			if (strategy != null) {
+				strategies.add(strategy);
+			}
+		}
+		return new CompositeResolutionStrategy(strategies);
 	}
 }

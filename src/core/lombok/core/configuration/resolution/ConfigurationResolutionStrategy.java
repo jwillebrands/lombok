@@ -19,10 +19,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
- package lombok.core.configuration.resolution;
+package lombok.core.configuration.resolution;
 
-import lombok.core.configuration.ConfigurationFile;
-
-interface ConfigurationFileFactory {
-	ConfigurationFile configrationFileFromLocation(String location);
+public interface ConfigurationResolutionStrategy {
+	ConfigurationSourceIteratorFactory getIteratorFactory();
 }

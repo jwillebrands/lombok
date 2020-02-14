@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package lombok.core.configuration;
+package lombok.core.configuration.resolution;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -29,6 +29,9 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 import lombok.ConfigurationKeys;
+import lombok.core.configuration.ConfigurationFile;
+import lombok.core.configuration.ConfigurationFileToSource;
+import lombok.core.configuration.ConfigurationSource;
 import lombok.core.configuration.ConfigurationSource.Result;
 
 

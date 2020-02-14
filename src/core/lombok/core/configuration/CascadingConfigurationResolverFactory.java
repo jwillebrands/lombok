@@ -1,9 +1,30 @@
+/*
+ * Copyright (C) 2020 The Project Lombok Authors.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
 package lombok.core.configuration;
 
 import java.net.URI;
 import java.util.Iterator;
 
-import lombok.core.configuration.resolution.ConfigurationResolutionSpecification;
+import lombok.core.configuration.resolution.ConfigurationResolutionStrategy;
 import lombok.core.configuration.resolution.ConfigurationSourceIteratorFactory;
 
 public class CascadingConfigurationResolverFactory implements ConfigurationResolverFactory {
@@ -11,13 +32,13 @@ public class CascadingConfigurationResolverFactory implements ConfigurationResol
 	private final FileSystemSourceCache fileSystemSourceCache;
 	private final ConfigurationFileToSource fileToSource;
 
-	public CascadingConfigurationResolverFactory(ConfigurationResolutionSpecification specification, FileSystemSourceCache fileSystemSourceCache, ConfigurationParser parser) {
-		this.iteratorFactory = specification.getIteratorFactory();
+	public CascadingConfigurationResolverFactory(ConfigurationResolutionStrategy resolutionStrategy, FileSystemSourceCache fileSystemSourceCache, ConfigurationParser parser) {
+		this.iteratorFactory = resolutionStrategy.getIteratorFactory();
 		this.fileSystemSourceCache = fileSystemSourceCache;
 		this.fileToSource = fileSystemSourceCache.fileToSource(parser);
 	}
 
-	public CascadingConfigurationResolverFactory(ConfigurationResolutionSpecification specification, FileSystemSourceCache fileSystemSourceCache) {
+	public CascadingConfigurationResolverFactory(ConfigurationResolutionStrategy specification, FileSystemSourceCache fileSystemSourceCache) {
 		this(specification, fileSystemSourceCache, new ConfigurationParser(ConfigurationProblemReporter.CONSOLE));
 	}
 

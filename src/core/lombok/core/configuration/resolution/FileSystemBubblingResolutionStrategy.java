@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2020 The Project Lombok Authors.
+ * Copyright (C) 2020 The Project Lombok Authors.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,22 +19,20 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package lombok.core.configuration;
+package lombok.core.configuration.resolution;
 
 import java.util.Iterator;
 
-public class BubblingConfigurationResolver implements ConfigurationResolver {
-	private final CascadingConfigurationResolver cascadingResolver;
+import lombok.core.configuration.ConfigurationFile;
+import lombok.core.configuration.ConfigurationFileToSource;
+import lombok.core.configuration.ConfigurationSource;
 
-	public BubblingConfigurationResolver(final ConfigurationFile forUri, final ConfigurationFileToSource fileToSource) {
-		this.cascadingResolver = new CascadingConfigurationResolver(new Iterable<ConfigurationSource>() {
-			@Override public Iterator<ConfigurationSource> iterator() {
+public class FileSystemBubblingResolutionStrategy implements ConfigurationResolutionStrategy {
+	@Override public ConfigurationSourceIteratorFactory getIteratorFactory() {
+		return new ConfigurationSourceIteratorFactory() {
+			@Override public Iterator<ConfigurationSource> iterateConfigurationSources(ConfigurationFile forUri, ConfigurationFileToSource fileToSource) {
 				return new BubblingConfigurationSourceIterator(forUri, fileToSource);
 			}
-		});
-	}
-
-	@Override public <T> T resolve(ConfigurationKey<T> key) {
-		return cascadingResolver.resolve(key);
+		};
 	}
 }

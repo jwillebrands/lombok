@@ -78,8 +78,9 @@ public abstract class ConfigurationFile {
 	abstract boolean exists();
 	abstract CharSequence contents() throws IOException;
 	public abstract ConfigurationFile resolve(String path);
-	abstract ConfigurationFile parent();
-	
+
+	public abstract ConfigurationFile parent();
+
 	final String description() {
 		return identifier;
 	}
@@ -177,7 +178,7 @@ public abstract class ConfigurationFile {
 			}
 		}
 
-		@Override ConfigurationFile parent() {
+		@Override public ConfigurationFile parent() {
 			File parent = file.getParentFile().getParentFile();
 			return parent == null ? null : forDirectory(parent);
 		}
@@ -299,9 +300,8 @@ public abstract class ConfigurationFile {
 				return null;
 			}
 		}
-		
-		@Override
-		ConfigurationFile parent() {
+
+		@Override public ConfigurationFile parent() {
 			return null;
 		}
 	}
@@ -332,7 +332,7 @@ public abstract class ConfigurationFile {
 			return null;
 		}
 
-		@Override ConfigurationFile parent() {
+		@Override public ConfigurationFile parent() {
 			return null;
 		}
 	}
@@ -366,7 +366,7 @@ public abstract class ConfigurationFile {
 			return null;
 		}
 
-		@Override ConfigurationFile parent() {
+		@Override public ConfigurationFile parent() {
 			return null;
 		}
 	}
