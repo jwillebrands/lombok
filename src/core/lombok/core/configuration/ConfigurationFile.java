@@ -338,27 +338,31 @@ public abstract class ConfigurationFile {
 	}
 
 	private static class ClasspathConfigurationFile extends ConfigurationFile {
-		private URL classpathResource;
+		private final URL classpathResource;
 
-		private ClasspathConfigurationFile(String identifier) {
-			super(identifier);
-			this.classpathResource = getClass().getResource(identifier);
+		private ClasspathConfigurationFile(String classpathLocation) {
+			// Make sure we don't collide with regular files.
+			super("classpath://" + classpathLocation);
+			classpathResource = getClass().getResource(classpathLocation);
 		}
 
 		@Override long getLastModifiedOrMissing() {
-			return 0;
+			return classpathResource == null ? FileSystemSourceCache.MISSING : 0;
 		}
 
 		@Override boolean exists() {
-			return this.classpathResource != null;
+			return classpathResource != null;
 		}
 
 		@Override CharSequence contents() throws IOException {
-			InputStream is = classpathResource.openStream();
+			InputStream is = null;
 			try {
+				is = classpathResource.openStream();
 				return read(is);
 			} finally {
-				is.close();
+				if (is != null) {
+					is.close();
+				}
 			}
 		}
 
