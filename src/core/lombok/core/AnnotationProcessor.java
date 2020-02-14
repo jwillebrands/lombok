@@ -31,6 +31,8 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -45,12 +47,16 @@ import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic.Kind;
 
+import lombok.core.configuration.resolution.ConfigurationResolutionStrategy;
+import lombok.core.configuration.resolution.ResolutionSpecificationParser;
 import lombok.patcher.ClassRootFinder;
 import lombok.permit.Permit;
 
 @SupportedAnnotationTypes("*")
 public class AnnotationProcessor extends AbstractProcessor {
-	
+	public static final String OPTION_RESOLVER = "lombok.config.resolver";
+	private static final Set<String> SUPPORTED_OPTIONS = Collections.singleton(OPTION_RESOLVER);
+
 	private static String trace(Throwable t) {
 		StringWriter w = new StringWriter();
 		t.printStackTrace(new PrintWriter(w, true));
@@ -185,6 +191,10 @@ public class AnnotationProcessor extends AbstractProcessor {
 			}
 			procEnv.getMessager().printMessage(Kind.WARNING, String.format("You aren't using a compiler supported by lombok, so lombok will not work and has been disabled.\n" +
 					"Your processor is: %s\nLombok supports: %s", procEnv.getClass().getName(), supported));
+		}
+		if (procEnv.getOptions().containsKey(OPTION_RESOLVER)) {
+			ConfigurationResolutionStrategy resolutionStrategy = new ResolutionSpecificationParser().parseResolutionSpecification(procEnv.getOptions().get(OPTION_RESOLVER));
+			LombokConfiguration.useResolutionStrategy(resolutionStrategy);
 		}
 	}
 	
