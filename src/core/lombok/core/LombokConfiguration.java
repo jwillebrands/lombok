@@ -42,9 +42,12 @@ public class LombokConfiguration {
 	
 	private static FileSystemSourceCache cache = new FileSystemSourceCache();
 	private static ConfigurationResolverFactory configurationResolverFactory;
-	
+
+	private static boolean isDisabled() {
+		return System.getProperty("lombok.disableConfig") != null;
+	}
 	static {
-		if (System.getProperty("lombok.disableConfig") != null) {
+		if (isDisabled()) {
 			configurationResolverFactory = new ConfigurationResolverFactory() {
 				@Override public ConfigurationResolver createResolver(URI sourceLocation) {
 					return NULL_RESOLVER;
@@ -77,6 +80,9 @@ public class LombokConfiguration {
 	}
 
 	public static void useResolutionStrategy(ConfigurationResolutionStrategy resolutionStrategy) {
+		if (isDisabled()) {
+			return;
+		}
 		configurationResolverFactory = new CascadingConfigurationResolverFactory(resolutionStrategy, cache);
 	}
 }
