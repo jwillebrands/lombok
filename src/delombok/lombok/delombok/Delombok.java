@@ -98,7 +98,8 @@ public class Delombok {
 	private LinkedHashMap<File, File> fileToBase = new LinkedHashMap<File, File>();
 	private List<File> filesToParse = new ArrayList<File>();
 	private Map<String, String> formatPrefs = new HashMap<String, String>();
-	
+	private String resolution;
+
 	/** If null, output to standard out. */
 	private File output = null;
 	
@@ -162,7 +163,11 @@ public class Delombok {
 		@Description("By default lombok enables preview features if available (introduced in JDK 12). With this option, lombok won't do that.")
 		@FullName("disable-preview")
 		private boolean disablePreview;
-		
+
+		@Shorthand({"r"})
+		@Description("Use the following config file resolution.")
+		private List<String> resolution = new ArrayList<String>();
+
 		private boolean help;
 	}
 	
@@ -298,7 +303,17 @@ public class Delombok {
 		if (args.sourcepath != null) delombok.setSourcepath(args.sourcepath);
 		if (args.bootclasspath != null) delombok.setBootclasspath(args.bootclasspath);
 		if (args.modulepath != null) delombok.setModulepath(args.modulepath);
-		
+		if (args.resolution != null) {
+			StringBuffer joinedResolution = new StringBuffer();
+			for (String resolutionStrategy : args.resolution) {
+				joinedResolution.append(resolutionStrategy);
+				joinedResolution.append(",");
+			}
+			if (joinedResolution.length() > 1) {
+				delombok.setResolution(joinedResolution.substring(0, joinedResolution.length() - 1));
+			}
+		}
+
 		try {
 			for (String in : args.input) {
 				File f = new File(in).getAbsoluteFile();
@@ -549,7 +564,11 @@ public class Delombok {
 	public void setModulepath(String modulepath) {
 		this.modulepath = modulepath;
 	}
-	
+
+	public void setResolution(String resolution) {
+		this.resolution = resolution;
+	}
+
 	public void addDirectory(File base) throws IOException {
 		addDirectory0(false, base, "", 0);
 	}
@@ -670,7 +689,11 @@ public class Delombok {
 		if (bootclasspath != null) options.putJavacOption("BOOTCLASSPATH", unpackClasspath(bootclasspath));
 		options.setFormatPreferences(new FormatPreferences(formatPrefs));
 		options.put("compilePolicy", "check");
-		
+		if (resolution != null) {
+			System.out.println("Setting resolution to: " + resolution);
+			options.putJavacOption("A", LombokProcessor.OPTION_RESOLVER + "=" + resolution);
+		}
+
 		if (Javac.getJavaCompilerVersion() >= 9) {
 			Arguments args = Arguments.instance(context);
 			List<String> argsList = new ArrayList<String>();
@@ -698,7 +721,10 @@ public class Delombok {
 				argsList.add("--module-path");
 				argsList.add(modulepath);
 			}
-			
+			if (resolution != null) {
+				argsList.add("-A" + options.get("-A"));
+			}
+
 			if (!disablePreview && Javac.getJavaCompilerVersion() >= 11) argsList.add("--enable-preview");
 			
 			String[] argv = argsList.toArray(new String[0]);
