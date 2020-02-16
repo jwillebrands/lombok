@@ -65,8 +65,8 @@ public class ResolutionSpecificationParser {
 		return null;
 	}
 	
-	public ConfigurationResolutionStrategy parseResolutionSpecification(String... specifications) {
-		return parseResolutionSpecification(Arrays.asList(specifications));
+	public ConfigurationResolutionStrategy parseResolutionSpecification(String specifications) {
+		return parseResolutionSpecification(Arrays.asList(specifications.split(",")));
 	}
 
 	public ConfigurationResolutionStrategy parseResolutionSpecification(Collection<String> specifications) {
