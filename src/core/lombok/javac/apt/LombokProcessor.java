@@ -40,6 +40,7 @@ import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
+import javax.annotation.processing.SupportedOptions;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.QualifiedNameable;
@@ -59,6 +60,10 @@ import com.sun.tools.javac.util.Context;
 import lombok.Lombok;
 import lombok.core.CleanupRegistry;
 import lombok.core.DiagnosticsReceiver;
+import lombok.core.LombokConfiguration;
+import lombok.core.configuration.resolution.ConfigurationResolutionStrategy;
+import lombok.core.configuration.resolution.FileSystemBubblingResolutionStrategy;
+import lombok.core.configuration.resolution.ResolutionSpecificationParser;
 import lombok.javac.JavacTransformer;
 import lombok.permit.Permit;
 
@@ -69,7 +74,9 @@ import lombok.permit.Permit;
  * running javac; that's the only requirement.
  */
 @SupportedAnnotationTypes("*")
+@SupportedOptions({LombokProcessor.OPTION_RESOLVER})
 public class LombokProcessor extends AbstractProcessor {
+	public static final String OPTION_RESOLVER = "lombok.config.resolver";
 
 	private ProcessingEnvironment processingEnv;
 	private JavacProcessingEnvironment javacProcessingEnv;
@@ -102,6 +109,12 @@ public class LombokProcessor extends AbstractProcessor {
 			int i = 0;
 			for (Long prio : p) this.priorityLevels[i++] = prio;
 			this.priorityLevelsRequiringResolutionReset = transformer.getPrioritiesRequiringResolutionReset();
+		}
+		if (procEnv.getOptions().containsKey(OPTION_RESOLVER)) {
+			String resolveSpecification = procEnv.getOptions().get(OPTION_RESOLVER);
+			ConfigurationResolutionStrategy resolutionStrategy = new ResolutionSpecificationParser(new FileSystemBubblingResolutionStrategy())
+					.parseResolutionSpecification(resolveSpecification);
+			LombokConfiguration.useResolutionStrategy(resolutionStrategy);
 		}
 	}
 	
